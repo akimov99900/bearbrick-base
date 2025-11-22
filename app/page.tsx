@@ -24,7 +24,7 @@ const config = createConfig({
 const queryClient = new QueryClient();
 
 // !!! ПРОВЕРЬ, ЧТО ТУТ НЕ НУЛИ !!!
-const CONTRACT_ADDRESS = "0x26ff7D9DD3a62c7De1370060d76B36113426809D"; // <-- ВСТАВЬ СВОЙ АДРЕС ИЗ REMIX
+const CONTRACT_ADDRESS = "0xf092813dbB399595cda130f6808839210BB216BA"; // <-- ВСТАВЬ СВОЙ АДРЕС ИЗ REMIX
 
 function App() {
   const [isSDKLoaded, setIsSDKLoaded] = useState(false);
