@@ -9,7 +9,7 @@ import './globals.css';
 const config = createConfig({ chains: [base], transports: { [base.id]: http() } });
 const queryClient = new QueryClient();
 // СЮДА ПОТОМ ВСТАВИШЬ АДРЕС КОНТРАКТА
-const CONTRACT = "0x0000000000000000000000000000000000000000";
+const CONTRACT = "0x79BE7A98cc7e0b60fd7378CEd46565F5BeC727cb";
 
 function Mint() {
   const { sendTransaction } = useSendTransaction();
