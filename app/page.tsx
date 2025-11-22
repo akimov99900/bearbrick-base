@@ -20,7 +20,7 @@ function Mint() {
       <img src="/api/image?fid=999" className="w-64 h-64 mb-6 rounded shadow-lg"/>
       <button 
         className="bg-blue-600 text-white px-6 py-3 rounded-lg font-bold"
-        onClick={() => sendTransaction({ to: CONTRACT, value: 100000000000000n, data: '0x1249c58b' })}
+        onClick={() => sendTransaction({ to: CONTRACT, value: BigInt(100000000000000), data: '0x1249c58b' })}
       >
         MINT 0.0001 ETH
       </button>
