@@ -24,7 +24,7 @@ const config = createConfig({
 const queryClient = new QueryClient();
 
 // !!! ПРОВЕРЬ, ЧТО ТУТ НЕ НУЛИ !!!
-const CONTRACT_ADDRESS = "0x79BE7A98cc7e0b60fd7378CEd46565F5BeC727cb"; // <-- ВСТАВЬ СВОЙ АДРЕС ИЗ REMIX
+const CONTRACT_ADDRESS = "0x26ff7D9DD3a62c7De1370060d76B36113426809D"; // <-- ВСТАВЬ СВОЙ АДРЕС ИЗ REMIX
 
 function App() {
   const [isSDKLoaded, setIsSDKLoaded] = useState(false);
@@ -64,7 +64,7 @@ function App() {
     
     sendTransaction({
       to: CONTRACT_ADDRESS,
-      value: BigInt(100000000000000), // 0.0001 ETH
+      value: BigInt(10000000000000), // 0.00001 ETH
       data: "0x1249c58b"
     });
   };
