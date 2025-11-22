@@ -1,37 +1,71 @@
 'use client';
 import { useState, useEffect } from 'react';
 import sdk from '@farcaster/frame-sdk';
-import { WagmiProvider, createConfig, http, useSendTransaction } from 'wagmi';
+import { 
+  WagmiProvider, 
+  createConfig, 
+  http, 
+  useSendTransaction, 
+  useWaitForTransactionReceipt,
+  useAccount,
+  useConnect 
+} from 'wagmi';
 import { base } from 'wagmi/chains';
+import { injected } from 'wagmi/connectors';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
+// Конфигурация с явным указанием injected (кошелька браузера/фаркастера)
 const config = createConfig({
   chains: [base],
+  connectors: [injected()],
   transports: { [base.id]: http() },
 });
+
 const queryClient = new QueryClient();
 
-// !!! ВСТАВЬ СЮДА СВОЙ АДРЕС КОНТРАКТА ВМЕСТО НУЛЕЙ !!!
-const CONTRACT_ADDRESS = "0x79BE7A98cc7e0b60fd7378CEd46565F5BeC727cb"; 
+// !!! ПРОВЕРЬ, ЧТО ТУТ НЕ НУЛИ !!!
+const CONTRACT_ADDRESS = "0x79BE7A98cc7e0b60fd7378CEd46565F5BeC727cb"; // <-- ВСТАВЬ СВОЙ АДРЕС ИЗ REMIX
 
 function App() {
-  const [isLoaded, setIsLoaded] = useState(false);
-  const { sendTransaction, isPending } = useSendTransaction();
+  const [isSDKLoaded, setIsSDKLoaded] = useState(false);
+  
+  // Хуки Wagmi
+  const { address, isConnected } = useAccount();
+  const { connect } = useConnect();
+  const { sendTransaction, error: sendError, isPending: isSending, data: hash } = useSendTransaction();
+  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
 
+  // 1. Инициализация SDK и Авто-подключение кошелька
   useEffect(() => {
     const load = async () => {
-      try { await sdk.actions.ready(); } catch(e) {}
-      setIsLoaded(true);
+      try {
+        await sdk.actions.ready();
+        setIsSDKLoaded(true);
+        
+        // Пытаемся подключиться к кошельку Фаркастера сразу при загрузке
+        if (!isConnected) {
+          connect({ connector: injected() });
+        }
+      } catch(e) {
+        console.error(e);
+      }
     };
     load();
-  }, []);
+  }, [isConnected, connect]);
 
-  // Вот она, функция mint, которую не мог найти Vercel
   const mint = () => {
+    // Если кошелек не подключен — подключаем
+    if (!isConnected) {
+      connect({ connector: injected() });
+      return;
+    }
+
+    console.log("Minting to:", CONTRACT_ADDRESS);
+    
     sendTransaction({
       to: CONTRACT_ADDRESS,
       value: BigInt(100000000000000), // 0.0001 ETH
-      data: "0x1249c58b" // Функция mint()
+      data: "0x1249c58b"
     });
   };
 
@@ -42,28 +76,36 @@ function App() {
         <h1 className="text-3xl font-extrabold mb-2 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">
           BearBrick Gen
         </h1>
-        <p className="text-zinc-400 mb-6 text-sm">Based on Farcaster ID</p>
+        
+        {/* Показываем статус кошелька для отладки */}
+        <div className="text-xs text-zinc-500 mb-4">
+           {isConnected ? `Wallet: ${address?.slice(0,6)}...${address?.slice(-4)}` : "Connecting wallet..."}
+        </div>
         
         <div className="relative w-64 h-64 bg-white rounded-xl overflow-hidden shadow-inner mb-8 border-4 border-zinc-600">
-             {/* Используем fid=1 для превью, в реальном аппе можно подставлять ID юзера */}
-             <img 
-               src="/api/image?fid=1" 
-               className="w-full h-full object-cover"
-               alt="Preview"
-             />
+             <img src="/api/image?fid=1" className="w-full h-full object-cover" alt="Preview" />
         </div>
 
-        <button 
-          onClick={mint}
-          disabled={isPending}
-          className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-xl transition-all transform active:scale-95 shadow-[0_0_20px_rgba(37,99,235,0.5)] disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-wide"
-        >
-          {isPending ? 'Processing...' : 'Get my BearBrick'}
-        </button>
-        
-        <div className="mt-4 text-xs text-zinc-500">
-          0.0001 ETH • Base Mainnet
-        </div>
+        {/* Блок вывода ошибок (ЧТОБЫ ПОНЯТЬ В ЧЕМ ДЕЛО) */}
+        {sendError && (
+          <div className="mb-4 p-3 bg-red-900/50 border border-red-500 rounded-lg text-xs text-red-200 w-full break-words">
+            Error: {sendError.message.slice(0, 100)}...
+          </div>
+        )}
+
+        {isSuccess ? (
+          <div className="w-full bg-green-600 text-white font-bold py-4 rounded-xl text-center shadow-[0_0_20px_rgba(34,197,94,0.5)]">
+            SUCCESS! MINTED!
+          </div>
+        ) : (
+          <button 
+            onClick={mint}
+            disabled={isSending || isConfirming}
+            className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-xl transition-all transform active:scale-95 shadow-[0_0_20px_rgba(37,99,235,0.5)] disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-wide"
+          >
+            {isSending ? 'Check Wallet...' : isConfirming ? 'Confirming...' : 'Get my BearBrick'}
+          </button>
+        )}
       </div>
     </div>
   );
